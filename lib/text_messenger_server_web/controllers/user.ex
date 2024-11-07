@@ -1,22 +1,12 @@
 defmodule TextMessengerServerWeb.UserController do
   use TextMessengerServerWeb, :controller
 
-  alias User
-  alias Users
-
-  @users [
-    %User{
-      id: 1,
-      name: "user1"
-    },
-    %User{
-      id: 2,
-      name: "user2"
-    }
-  ]
+  alias TextMessengerServer.Accounts
+  alias TextMessengerServer.Protobuf.User
+  alias TextMessengerServer.Protobuf.Users
 
   def fetch_users(conn, _params) do
-    user_list = %Users{users: @users}
+    {:ok, user_list} = Accounts.get_users()
 
     conn
     |> put_resp_content_type("application/x-protobuf")
@@ -24,17 +14,26 @@ defmodule TextMessengerServerWeb.UserController do
   end
 
   def fetch_user(conn, %{"id" => id}) do
-    user =
-      @users
-      |> Enum.find(fn %User{id: user_id} -> user_id == String.to_integer(id) end)
+    case Ecto.UUID.cast(id) do
+      :error ->
+        conn
+        |> send_resp(400, Jason.encode!(%{error: "Invalid UUID format"}))
 
-    if user do
-      conn
-      |> put_resp_content_type("application/x-protobuf")
-      |> send_resp(200, User.encode(user))
-    else
-      conn
-      |> send_resp(404, "User not found")
+      {:ok, valid_uuid} ->
+        case Accounts.get_user(valid_uuid) do
+          {:ok, user} ->
+            conn
+            |> put_resp_content_type("application/x-protobuf")
+            |> send_resp(200, User.encode(user))
+          {:error, message} ->
+            conn
+            |> send_resp(404, Jason.encode!(%{error: message}))
+        end
     end
+  end
+
+  def fetch_user(conn, _params) do
+    conn
+    |> send_resp(400, Jason.encode!(%{error: "User ID not provided"}))
   end
 end

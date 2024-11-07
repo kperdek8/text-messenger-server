@@ -53,7 +53,8 @@ defmodule TextMessengerServer.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:protobuf, "~> 0.13.0"}
+      {:protobuf, "~> 0.13.0"},
+      {:bcrypt_elixir, "~> 3.2.0"}
     ]
   end
 

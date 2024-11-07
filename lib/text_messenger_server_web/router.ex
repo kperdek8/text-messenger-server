@@ -10,6 +10,12 @@ defmodule TextMessengerServerWeb.Router do
 
     get("/users/:id", UserController, :fetch_user)
     get("/users", UserController, :fetch_users)
+
+    post("/users/register", UserAuthController, :register)
+    post("/users/login", UserAuthController, :login)
+    post("/users/logout", UserAuthController, :logout)
+    post("/verify_token", UserAuthController, :verify_token)
+
     get("/chats", ChatController, :fetch_chats)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
     post("/chats/:id/messages", ChatMessagesController, :post_message)

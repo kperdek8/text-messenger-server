@@ -1,28 +1,28 @@
 defmodule TextMessengerServerWeb.ChatMessagesController do
   use TextMessengerServerWeb, :controller
 
-  alias ChatMessage
-  alias ChatMessages
+  alias TextMessengerServer.Protobuf.ChatMessage
+  alias TextMessengerServer.Protobuf.ChatMessages
 
   @messages [
     %ChatMessage{
-      id: 1,
-      user_id: 1,
-      chat_id: 1,
+      id: "11111111-1111-1111-1111-111111111111",
+      user_id: "453dab88-c5be-43fa-b31a-3ea296c2fa8e",
+      chat_id: "11111111-1111-1111-1111-111111111111",
       content: "Wiadomość 1 z czatu 1",
       timestamp: "2024-01-01 10:00:00"
     },
     %ChatMessage{
-      id: 2,
-      user_id: 2,
-      chat_id: 1,
+      id: "11111111-1111-1111-1111-111111111112",
+      user_id: "4fd17dfa-c1cb-49e5-a0de-eba33dc23c9d",
+      chat_id: "11111111-1111-1111-1111-111111111111",
       content: "Wiadomość 2 z czatu 1",
       timestamp: "2024-01-01 10:01:00"
     },
     %ChatMessage{
-      id: 3,
-      user_id: 1,
-      chat_id: 2,
+      id: "11111111-1111-1111-1111-111111111113",
+      user_id: "453dab88-c5be-43fa-b31a-3ea296c2fa8e",
+      chat_id: "11111111-1111-1111-1111-111111111112",
       content: "Wiadomość 2 z czatu 2",
       timestamp: "2024-01-01 10:01:00"
     }
@@ -34,7 +34,7 @@ defmodule TextMessengerServerWeb.ChatMessagesController do
 
     filtered_messages =
       @messages
-      |> Enum.filter(fn %ChatMessage{chat_id: chat_id} -> chat_id == String.to_integer(id) end)
+      |> Enum.filter(fn %ChatMessage{chat_id: chat_id} -> chat_id == id end)
 
     chat_messages = %ChatMessages{messages: filtered_messages}
 

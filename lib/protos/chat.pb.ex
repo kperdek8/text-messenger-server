@@ -1,54 +1,54 @@
-defmodule User do
+defmodule TextMessengerServer.Protobuf.User do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :id, 1, type: :int32
+  field :id, 1, type: :string
   field :name, 2, type: :string
 end
 
-defmodule Users do
+defmodule TextMessengerServer.Protobuf.Users do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :users, 1, repeated: true, type: User
+  field :users, 1, repeated: true, type: TextMessengerServer.Protobuf.User
 end
 
-defmodule Chat do
+defmodule TextMessengerServer.Protobuf.Chat do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :id, 1, type: :int32
-  field :users, 2, repeated: true, type: User
+  field :id, 1, type: :string
+  field :users, 2, repeated: true, type: TextMessengerServer.Protobuf.User
   field :name, 3, type: :string
 end
 
-defmodule Chats do
+defmodule TextMessengerServer.Protobuf.Chats do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :chats, 1, repeated: true, type: Chat
+  field :chats, 1, repeated: true, type: TextMessengerServer.Protobuf.Chat
 end
 
-defmodule ChatMessage do
+defmodule TextMessengerServer.Protobuf.ChatMessage do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :id, 1, type: :int32
-  field :user_id, 2, type: :int32, json_name: "userId"
-  field :chat_id, 3, type: :int32, json_name: "chatId"
+  field :id, 1, type: :string
+  field :user_id, 2, type: :string, json_name: "userId"
+  field :chat_id, 3, type: :string, json_name: "chatId"
   field :content, 4, type: :string
   field :timestamp, 5, type: :string
 end
 
-defmodule ChatMessages do
+defmodule TextMessengerServer.Protobuf.ChatMessages do
   @moduledoc false
 
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
-  field :messages, 1, repeated: true, type: ChatMessage
+  field :messages, 1, repeated: true, type: TextMessengerServer.Protobuf.ChatMessage
 end
