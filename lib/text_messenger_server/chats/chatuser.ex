@@ -2,6 +2,7 @@ defmodule TextMessengerServer.Chats.ChatUser do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key false
   schema "chat_users" do
     belongs_to(:chat, TextMessengerServer.Chats.Chat, type: :binary_id)
     belongs_to(:user, TextMessengerServer.Accounts.User, type: :binary_id)

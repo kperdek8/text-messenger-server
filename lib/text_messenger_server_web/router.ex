@@ -18,7 +18,6 @@ defmodule TextMessengerServerWeb.Router do
 
     get("/chats", ChatController, :fetch_chats)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
-    post("/chats/:id/messages", ChatMessagesController, :post_message)
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

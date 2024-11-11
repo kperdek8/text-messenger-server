@@ -9,7 +9,7 @@ defmodule TextMessengerServerWeb.UserAuthController do
       {:ok, _user} ->
         conn
         |> put_status(:created)
-        |> json(%{message: "Registration successful!", user: username})
+        |> json(%{message: "Registration successful!", username: username})
 
       {:error, changeset} ->
         conn
@@ -23,10 +23,10 @@ defmodule TextMessengerServerWeb.UserAuthController do
 
   def login(conn, %{"username" => username, "password" => password}) do
     case Accounts.authenticate_user(username, password) do
-      {:ok, _user} ->
+      {:ok, user} ->
         conn
         |> put_status(:ok)
-        |> json(%{message: "Login successful!", token: @placeholder_token, user: username})
+        |> json(%{message: "Login successful!", token: @placeholder_token, username: user.username, user_id: user.id})
 
       {:error, :not_found} ->
         conn

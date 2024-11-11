@@ -46,6 +46,34 @@ defmodule TextMessengerServer.Chats do
   end
 
   @doc """
+  Fetches all chats and converts it to Protobuf format.
+  """
+  def get_chats() do
+    chats =
+      Repo.all(from(c in Chat, select: [:id, :name])) |> Repo.preload(:users)
+
+      chats_proto = %Protobuf.Chats{
+        chats:
+          Enum.map(chats, fn %Chat{id: id, name: name, users: users} ->
+            %Protobuf.Chat{
+              id: Ecto.UUID.cast!(id),
+              name: name,
+              users:
+                Enum.map(users, fn user ->
+                  %Protobuf.User{
+                    # Convert UUID to string
+                    id: Ecto.UUID.cast!(user.id),
+                    name: user.username
+                  }
+                end)
+            }
+          end)
+      }
+
+      {:ok, chats_proto}
+  end
+
+  @doc """
   Adds a user to a chat by creating an entry in the ChatUser join table.
   """
   def add_user_to_chat(chat_id, user_id) do

@@ -1,7 +1,7 @@
 defmodule TextMessengerServerWeb.UserSocket do
   use Phoenix.Socket
 
-  channel "room:*", TextMessengerServerWeb.RoomChannel
+  channel "chat:*", TextMessengerServerWeb.ChatChannel
   channel "notifications:*", TextMessengerServerWeb.NotificationChannel
 
   # Replace with token verification later
