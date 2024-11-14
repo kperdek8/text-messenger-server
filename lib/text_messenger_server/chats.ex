@@ -133,7 +133,7 @@ defmodule TextMessengerServer.Chats do
         from(m in ChatMessage,
           where: m.chat_id == ^chat_id,
           select: [:id, :user_id, :chat_id, :content, :timestamp],
-          order_by: [asc: m.timestamp]
+          order_by: [desc: m.timestamp]
         )
       )
 
