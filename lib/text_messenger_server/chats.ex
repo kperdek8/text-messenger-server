@@ -48,9 +48,16 @@ defmodule TextMessengerServer.Chats do
   @doc """
   Fetches all chats and converts it to Protobuf format.
   """
-  def get_chats() do
+  def get_chats(user_id) do
     chats =
-      Repo.all(from(c in Chat, select: [:id, :name])) |> Repo.preload(:users)
+      from(c in Chat,
+        join: cu in ChatUser,
+        on: cu.chat_id == c.id,
+        where: cu.user_id == ^user_id, # Fetch only chats which user belongs to
+        select: c,
+        preload: [:users] # Preload users for each chat
+      )
+      |> Repo.all()
 
       chats_proto = %Protobuf.Chats{
         chats:
@@ -85,7 +92,7 @@ defmodule TextMessengerServer.Chats do
   @doc """
   Fetches users in a specific chat and returns them in Protobuf format.
   """
-  def get_users_in_chat(chat_id) do
+  def get_chat_members(chat_id) do
     users =
       Repo.all(
         from(u in User,

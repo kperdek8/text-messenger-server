@@ -10,7 +10,6 @@ defmodule TextMessengerServerWeb.Router do
 
     post("/users/register", UserAuthController, :register)
     post("/users/login", UserAuthController, :login)
-    post("/verify_token", UserAuthController, :verify_token)
   end
 
   # Routes requiring JWT authentication
@@ -21,7 +20,8 @@ defmodule TextMessengerServerWeb.Router do
     get("/users", UserController, :fetch_users)
 
     get("/chats", ChatController, :fetch_chats)
-    get("/chats/:id/messages", ChatMessagesController, :fetch_messages)  # Secured route
+    get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
+    get("/chats/:id/users", UserController, :fetch_chat_members)
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

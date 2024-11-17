@@ -2,8 +2,6 @@ defmodule TextMessengerServerWeb.UserAuthController do
   use TextMessengerServerWeb, :controller
   alias TextMessengerServer.Accounts
 
-  @placeholder_token "token123"
-
   def register(conn, %{"username" => username, "password" => password}) do
     case Accounts.register_user(%{username: username, password: password}) do
       {:ok, _user} ->
@@ -43,18 +41,6 @@ defmodule TextMessengerServerWeb.UserAuthController do
         conn
         |> put_status(:unauthorized)
         |> json(%{error: "Invalid password"})
-    end
-  end
-
-  def verify_token(conn, %{"token" => token}) do
-    if token == @placeholder_token do
-      conn
-      |> put_status(:ok)
-      |> json(%{message: "Token valid"})
-    else
-      conn
-      |> put_status(:unauthorized)
-      |> json(%{error: "Token invalid"})
     end
   end
 

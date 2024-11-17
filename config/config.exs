@@ -14,7 +14,7 @@ config :text_messenger_server,
 # Guardian configuration
 config :text_messenger_server, TextMessengerServerWeb.Auth.Guardian,
   issuer: "TextMessengerServer",
-  secret_key: "porA5fErpo7AFSmUm1WLxATKuHfX8h3KSLxYW7ilBtSfTTCFPpa7spRETDmRCJVi"
+  secret_key: "to_do_read_from_env"
 
 # Configures the endpoint
 config :text_messenger_server, TextMessengerServerWeb.Endpoint,
