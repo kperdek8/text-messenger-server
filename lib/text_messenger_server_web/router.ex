@@ -8,16 +8,20 @@ defmodule TextMessengerServerWeb.Router do
   scope "/api", TextMessengerServerWeb do
     pipe_through(:api)
 
+    post("/users/register", UserAuthController, :register)
+    post("/users/login", UserAuthController, :login)
+    post("/verify_token", UserAuthController, :verify_token)
+  end
+
+  # Routes requiring JWT authentication
+  scope "/api", TextMessengerServerWeb do
+    pipe_through([:api, TextMessengerServerWeb.Auth.Pipeline])
+
     get("/users/:id", UserController, :fetch_user)
     get("/users", UserController, :fetch_users)
 
-    post("/users/register", UserAuthController, :register)
-    post("/users/login", UserAuthController, :login)
-    post("/users/logout", UserAuthController, :logout)
-    post("/verify_token", UserAuthController, :verify_token)
-
     get("/chats", ChatController, :fetch_chats)
-    get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
+    get("/chats/:id/messages", ChatMessagesController, :fetch_messages)  # Secured route
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

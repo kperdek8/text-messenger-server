@@ -159,4 +159,16 @@ defmodule TextMessengerServer.Chats do
 
     {:ok, messages_proto}
   end
+
+  @doc """
+  Verifies if user is member of specific chat.
+  """
+  def is_user_member_of_chat?(user_id, chat_id) do
+    query = from c in Chat,
+            join: u in assoc(c, :users),
+            where: c.id == ^chat_id and u.id == ^user_id,
+            select: u.id
+
+    Repo.exists?(query)
+  end
 end

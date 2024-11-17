@@ -24,9 +24,15 @@ defmodule TextMessengerServerWeb.UserAuthController do
   def login(conn, %{"username" => username, "password" => password}) do
     case Accounts.authenticate_user(username, password) do
       {:ok, user} ->
+        claims = %{
+          "sub" => user.id,
+          "exp" => DateTime.utc_now() |> DateTime.add(24 * 60 * 60, :second) |> DateTime.to_unix(:seconds),
+          "username" => user.username
+        }
+        {:ok, token, _claims} = TextMessengerServerWeb.Auth.Guardian.encode_and_sign(user, claims)
         conn
         |> put_status(:ok)
-        |> json(%{message: "Login successful!", token: @placeholder_token, username: user.username, user_id: user.id})
+        |> json(%{message: "Login successful!", token: token, username: user.username, user_id: user.id})
 
       {:error, :not_found} ->
         conn
