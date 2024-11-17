@@ -10,4 +10,28 @@ defmodule TextMessengerServerWeb.ChatController do
     |> put_resp_content_type("application/x-protobuf")
     |> send_resp(200, Protobuf.Chats.encode(chat_list))
   end
+
+  def fetch_chat(conn, %{"id" => id}) do
+    case Ecto.UUID.cast(id) do
+      :error ->
+        conn
+        |> send_resp(400, Jason.encode!(%{error: "Invalid UUID format"}))
+
+      {:ok, valid_uuid} ->
+        case Chats.get_chat(valid_uuid) do
+          {:ok, chat} ->
+            conn
+            |> put_resp_content_type("application/x-protobuf")
+            |> send_resp(200, Protobuf.Chat.encode(chat))
+          {:error, message} ->
+            conn
+            |> send_resp(404, Jason.encode!(%{error: message}))
+        end
+    end
+  end
+
+  def fetch_chat(conn, _params) do
+    conn
+    |> send_resp(400, Jason.encode!(%{error: "Chat ID not provided"}))
+  end
 end

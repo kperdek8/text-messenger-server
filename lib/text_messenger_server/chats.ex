@@ -84,9 +84,30 @@ defmodule TextMessengerServer.Chats do
   Adds a user to a chat by creating an entry in the ChatUser join table.
   """
   def add_user_to_chat(chat_id, user_id) do
-    %ChatUser{}
-    |> ChatUser.changeset(%{chat_id: chat_id, user_id: user_id})
-    |> Repo.insert()
+    case Repo.get_by(ChatUser, chat_id: chat_id, user_id: user_id) do
+      nil ->
+        %ChatUser{}
+        |> ChatUser.changeset(%{chat_id: chat_id, user_id: user_id})
+        |> Repo.insert()
+        :ok
+
+      _chat_user ->
+        :already_member
+    end
+  end
+
+  @doc """
+  Removes a user from a chat by deleting the entry in the ChatUser join table.
+  """
+  def remove_user_from_chat(chat_id, user_id) do
+    query = from cu in ChatUser,
+            where: cu.chat_id == ^chat_id and cu.user_id == ^user_id
+
+    case Repo.delete_all(query) do
+      {0, _} -> :not_member
+      {1, _} -> :ok
+      {count, _} when count > 1 -> {:error, "Multiple associations found, which shouldn't happen"}
+    end
   end
 
   @doc """

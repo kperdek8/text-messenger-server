@@ -8,4 +8,14 @@ defmodule TextMessengerServerWeb.NotificationChannel do
       {:error, "You are not this user"}
     end
   end
+
+  def handle_info(%{event: "added_to_chat", payload: payload}, socket) do
+    push(socket, "added_to_chat", payload)
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "removed_from_chat", payload: payload}, socket) do
+    push(socket, "added_to_chat", payload)
+    {:noreply, socket}
+  end
 end

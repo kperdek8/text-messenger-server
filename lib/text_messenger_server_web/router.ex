@@ -19,6 +19,7 @@ defmodule TextMessengerServerWeb.Router do
     get("/users/:id", UserController, :fetch_user)
     get("/users", UserController, :fetch_users)
 
+    get("/chats/:id", ChatController, :fetch_chat)
     get("/chats", ChatController, :fetch_chats)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
     get("/chats/:id/users", UserController, :fetch_chat_members)
