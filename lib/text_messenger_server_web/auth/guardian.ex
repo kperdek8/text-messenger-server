@@ -7,7 +7,7 @@ defmodule TextMessengerServerWeb.Auth.Guardian do
 
   def resource_from_claims(%{"sub" => id}) do
     case TextMessengerServer.Accounts.get_user(id) do
-      nil -> {:error, :not_found}
+      {:error, "User not found"} -> {:error, :no_resource_found}
       user -> {:ok, user}
     end
   end

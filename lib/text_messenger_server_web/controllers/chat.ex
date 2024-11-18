@@ -34,4 +34,13 @@ defmodule TextMessengerServerWeb.ChatController do
     conn
     |> send_resp(400, Jason.encode!(%{error: "Chat ID not provided"}))
   end
+
+  def create_chat(conn, %{"name" => name}) do
+    {:ok, %{id: user_id}} = Guardian.Plug.current_resource(conn)
+    chat = Chats.create_chat(name)
+    Chats.add_user_to_chat(chat.id, user_id)
+    conn
+    |> put_resp_content_type("application/x-protobuf")
+    |> send_resp(200, Protobuf.Chat.encode(chat))
+  end
 end

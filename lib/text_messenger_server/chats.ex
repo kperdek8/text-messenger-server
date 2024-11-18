@@ -12,7 +12,9 @@ defmodule TextMessengerServer.Chats do
   def create_chat(name) do
     %Chat{}
     |> Chat.changeset(%{name: name})
-    |> Repo.insert()
+    |> Repo.insert!()
+    |> Repo.preload(:users)
+    |> to_protobuf_chat()
   end
 
   @doc """
@@ -20,64 +22,32 @@ defmodule TextMessengerServer.Chats do
   """
   def get_chat(id) do
     chat =
-      Repo.one(from(c in Chat, where: c.id == ^id, select: [:id, :name])) |> Repo.preload(:users)
+      from(c in Chat, where: c.id == ^id, select: [:id, :name])
+      |> Repo.one()
+      |> Repo.preload(:users)
 
     case chat do
-      nil ->
-        {:error, "Chat not found"}
-
-      %{id: id, name: name, users: users} ->
-        chat_proto = %Protobuf.Chat{
-          # Ensure that the id is a string UUID
-          id: Ecto.UUID.cast!(id),
-          name: name,
-          users:
-            Enum.map(users, fn user ->
-              %Protobuf.User{
-                # Convert UUID to string
-                id: Ecto.UUID.cast!(user.id),
-                name: user.username
-              }
-            end)
-        }
-
-        {:ok, chat_proto}
+      nil -> {:error, "Chat not found"}
+      chat -> {:ok, to_protobuf_chat(chat)}
     end
   end
 
   @doc """
-  Fetches all chats and converts it to Protobuf format.
+  Fetches all chats available to user and converts it to Protobuf format.
   """
   def get_chats(user_id) do
     chats =
       from(c in Chat,
         join: cu in ChatUser,
         on: cu.chat_id == c.id,
-        where: cu.user_id == ^user_id, # Fetch only chats which user belongs to
+        where: cu.user_id == ^user_id,
         select: c,
-        preload: [:users] # Preload users for each chat
+        preload: [:users]
       )
       |> Repo.all()
+      |> to_protobuf_chats()
 
-      chats_proto = %Protobuf.Chats{
-        chats:
-          Enum.map(chats, fn %Chat{id: id, name: name, users: users} ->
-            %Protobuf.Chat{
-              id: Ecto.UUID.cast!(id),
-              name: name,
-              users:
-                Enum.map(users, fn user ->
-                  %Protobuf.User{
-                    # Convert UUID to string
-                    id: Ecto.UUID.cast!(user.id),
-                    name: user.username
-                  }
-                end)
-            }
-          end)
-      }
-
-      {:ok, chats_proto}
+    {:ok, chats}
   end
 
   @doc """
@@ -115,27 +85,16 @@ defmodule TextMessengerServer.Chats do
   """
   def get_chat_members(chat_id) do
     users =
-      Repo.all(
-        from(u in User,
-          join: cu in ChatUser,
-          on: cu.user_id == u.id,
-          where: cu.chat_id == ^chat_id,
-          select: [:id, :username]
-        )
+      from(u in User,
+        join: cu in ChatUser,
+        on: cu.user_id == u.id,
+        where: cu.chat_id == ^chat_id,
+        select: [:id, :username]
       )
+      |> Repo.all()
+      |> to_protobuf_users()
 
-    users_proto = %Protobuf.Users{
-      users:
-        Enum.map(users, fn %User{id: id, username: username} ->
-          %Protobuf.User{
-            # Convert UUID to string
-            id: Ecto.UUID.cast!(id),
-            name: username
-          }
-        end)
-    }
-
-    {:ok, users_proto}
+    {:ok, users}
   end
 
   @doc """
@@ -157,35 +116,15 @@ defmodule TextMessengerServer.Chats do
   """
   def get_chat_messages(chat_id) do
     messages =
-      Repo.all(
-        from(m in ChatMessage,
-          where: m.chat_id == ^chat_id,
-          select: [:id, :user_id, :chat_id, :content, :timestamp],
-          order_by: [desc: m.timestamp]
-        )
+      from(m in ChatMessage,
+        where: m.chat_id == ^chat_id,
+        select: [:id, :user_id, :chat_id, :content, :timestamp],
+        order_by: [desc: m.timestamp]
       )
+      |> Repo.all()
+      |> to_protobuf_messages()
 
-    messages_proto = %Protobuf.ChatMessages{
-      messages:
-        Enum.map(messages, fn %ChatMessage{
-                                id: id,
-                                user_id: user_id,
-                                chat_id: chat_id,
-                                content: content,
-                                timestamp: timestamp
-                              } ->
-          %Protobuf.ChatMessage{
-            # Ensure that the id is a string UUID
-            id: Ecto.UUID.cast!(id),
-            user_id: Ecto.UUID.cast!(user_id),
-            chat_id: Ecto.UUID.cast!(chat_id),
-            content: content,
-            timestamp: DateTime.to_string(timestamp)
-          }
-        end)
-    }
-
-    {:ok, messages_proto}
+    {:ok, messages}
   end
 
   @doc """
@@ -198,5 +137,50 @@ defmodule TextMessengerServer.Chats do
             select: u.id
 
     Repo.exists?(query)
+  end
+
+  # Conversion Functions
+
+  defp to_protobuf_user(%User{id: id, username: username}) do
+    %Protobuf.User{
+      id: Ecto.UUID.cast!(id),
+      name: username
+    }
+  end
+
+  defp to_protobuf_users(users) do
+    %Protobuf.Users{
+      users: Enum.map(users, &to_protobuf_user/1)
+    }
+  end
+
+  defp to_protobuf_chat(%Chat{id: id, name: name, users: users}) do
+    %Protobuf.Chat{
+      id: Ecto.UUID.cast!(id),
+      name: name,
+      users: Enum.map(users, &to_protobuf_user/1)
+    }
+  end
+
+  defp to_protobuf_chats(chats) do
+    %Protobuf.Chats{
+      chats: Enum.map(chats, &to_protobuf_chat/1)
+    }
+  end
+
+  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp}) do
+    %Protobuf.ChatMessage{
+      id: Ecto.UUID.cast!(id),
+      user_id: Ecto.UUID.cast!(user_id),
+      chat_id: Ecto.UUID.cast!(chat_id),
+      content: content,
+      timestamp: DateTime.to_string(timestamp)
+    }
+  end
+
+  defp to_protobuf_messages(messages) do
+    %Protobuf.ChatMessages{
+      messages: Enum.map(messages, &to_protobuf_message/1)
+    }
   end
 end
