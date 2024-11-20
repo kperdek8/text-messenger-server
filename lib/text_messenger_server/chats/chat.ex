@@ -6,7 +6,11 @@ defmodule TextMessengerServer.Chats.Chat do
   @primary_key {:id, :binary_id, autogenerate: true}
   schema "chats" do
     field(:name, :string)
+    field :current_key_number, :integer, default: 1
+
     many_to_many(:users, TextMessengerServer.Accounts.User, join_through: "chat_users")
+
+    has_many :group_keys, TextMessengerServer.Chats.GroupKey
 
     timestamps()
   end
@@ -14,7 +18,7 @@ defmodule TextMessengerServer.Chats.Chat do
   @doc false
   def changeset(chat, attrs) do
     chat
-    |> cast(attrs, [:name])
-    |> validate_required([:name])
+    |> cast(attrs, [:name, :current_key_number])
+    |> validate_required([:name, :current_key_number])
   end
 end
