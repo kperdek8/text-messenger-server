@@ -59,9 +59,11 @@ defmodule TextMessengerServer.Protobuf.GroupKey do
   use Protobuf, syntax: :proto3, protoc_gen_elixir_version: "0.13.0"
 
   field :chat_id, 1, type: :string, json_name: "chatId"
-  field :user_id, 2, type: :string, json_name: "userId"
-  field :key_number, 3, proto3_optional: true, type: :int32, json_name: "keyNumber"
-  field :encrypted_key, 4, type: :bytes, json_name: "encryptedKey"
+  field :recipient_id, 2, type: :string, json_name: "recipientId"
+  field :creator_id, 3, type: :string, json_name: "creatorId"
+  field :key_number, 4, proto3_optional: true, type: :int32, json_name: "keyNumber"
+  field :encrypted_key, 5, type: :bytes, json_name: "encryptedKey"
+  field :signature, 6, type: :bytes
 end
 
 defmodule TextMessengerServer.Protobuf.GroupKeys do
