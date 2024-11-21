@@ -32,3 +32,32 @@ message ChatMessage {
 message ChatMessages {
   repeated ChatMessage messages = 1;
 }
+
+message GroupKey {
+    string chat_id = 1;
+    string user_id = 2;
+    optional int32 key_number = 3;
+    bytes encrypted_key = 4;
+}
+
+message GroupKeys {
+    repeated GroupKey group_keys = 1;
+}
+
+message EncryptionKey {
+    string user_id = 1;
+    bytes encrypted_key = 2;
+}
+
+message EncryptionKeys {
+    repeated EncryptionKey encryption_keys = 1;
+}
+
+message SignatureKey {
+    string user_id = 1;
+    bytes encrypted_key = 2;
+}
+
+message SignatureKeys {
+    repeated SignatureKey signature_keys = 1;
+}
