@@ -1,4 +1,4 @@
-defmodule TextMessengerServer.Accounts.SignaturePublicKey do
+defmodule TextMessengerServer.Accounts.SignatureKey do
   use Ecto.Schema
   import Ecto.Changeset
 

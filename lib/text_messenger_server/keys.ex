@@ -1,6 +1,6 @@
 defmodule TextMessengerServer.Keys do
   alias TextMessengerServer.Repo
-  alias TextMessengerServer.Accounts.{EncryptionPublicKey, SignaturePublicKey}
+  alias TextMessengerServer.Accounts.{EncryptionKey, SignatureKey}
   alias TextMessengerServer.Chats.{Chat, ChatUser, GroupKey}
   alias TextMessengerServer.Protobuf
 
@@ -9,69 +9,81 @@ defmodule TextMessengerServer.Keys do
   @doc """
   Fetch encryption public keys of all users in a specific chat.
   """
-  def get_encryption_public_keys_for_chat(chat_id) do
-    from(cu in ChatUser,
-      join: epk in EncryptionPublicKey,
-      on: cu.user_id == epk.user_id,
+  def get_encryption_keys_for_chat(chat_id) do
+    keys = from(cu in ChatUser,
+      join: ek in EncryptionKey,
+      on: cu.user_id == ek.user_id,
       where: cu.chat_id == ^chat_id,
-      select: %{user_id: epk.user_id, public_key: epk.public_key}
+      select: ek,
+      order_by: ek.user_id
     )
     |> Repo.all()
+    |> to_protobuf_encryption_keys()
+    {:ok, keys}
   end
 
   @doc """
   Fetch signature public keys of all users in a specific chat.
   """
-  def get_signature_public_keys_for_chat(chat_id) do
-    from(cu in ChatUser,
-      join: spk in SignaturePublicKey,
-      on: cu.user_id == spk.user_id,
+  def get_signature_keys_for_chat(chat_id) do
+    keys = from(cu in ChatUser,
+      join: sk in SignatureKey,
+      on: cu.user_id == sk.user_id,
       where: cu.chat_id == ^chat_id,
-      select: %{user_id: spk.user_id, public_key: spk.public_key}
+      select: sk,
+      order_by: sk.user_id
     )
     |> Repo.all()
+    |> to_protobuf_signature_keys()
+    {:ok, keys}
   end
 
   @doc """
   Fetch the encryption public key for a specific user.
   """
-  def get_encryption_public_key(user_id) do
-    EncryptionPublicKey
-    |> Repo.get_by(user_id: user_id)
+  def get_encryption_key(user_id) do
+    case Repo.get_by(EncryptionKey, user_id: user_id) do
+      nil -> {:ok, nil}
+      key -> {:ok, to_protobuf_encryption_key(key)}
+    end
   end
 
   @doc """
   Fetch the signature public key for a specific user.
   """
-  def get_signature_public_key(user_id) do
-    SignaturePublicKey
-    |> Repo.get_by(user_id: user_id)
+  def get_signature_key(user_id) do
+    case Repo.get_by(SignatureKey, user_id: user_id) do
+      nil -> {:ok, nil}
+      key -> {:ok, to_protobuf_signature_key(key)}
+    end
   end
 
   @doc """
   Updates the encryption public key for a specific user.
   If no record exists, inserts a new one.
   """
-  def change_encryption_public_key(user_id, new_public_key) do
-    %EncryptionPublicKey{}
-    |> EncryptionPublicKey.changeset(%{user_id: user_id, public_key: new_public_key})
-    |> Repo.insert_or_update(
+  def change_encryption_key(user_id, new_public_key) do
+    %EncryptionKey{}
+    |> EncryptionKey.changeset(%{user_id: user_id, public_key: new_public_key})
+    |> Repo.insert_or_update!(
       conflict_target: [:user_id],
       on_conflict: [set: [public_key: new_public_key, updated_at: DateTime.utc_now()]]
     )
+    |> to_protobuf_encryption_key()
   end
 
   @doc """
   Updates the signature public key for a specific user.
   If no record exists, inserts a new one.
   """
-  def change_signature_public_key(user_id, new_public_key) do
-    %SignaturePublicKey{}
-    |> SignaturePublicKey.changeset(%{user_id: user_id, public_key: new_public_key})
-    |> Repo.insert_or_update(
+  def change_signature_key(user_id, new_public_key) do
+    %SignatureKey{}
+    |> SignatureKey.changeset(%{user_id: user_id, public_key: new_public_key})
+    |> Repo.insert_or_update!(
       conflict_target: [:user_id],
       on_conflict: [set: [public_key: new_public_key, updated_at: DateTime.utc_now()]]
     )
+    |> to_protobuf_signature_key()
   end
 
   @doc """
@@ -83,6 +95,7 @@ defmodule TextMessengerServer.Keys do
     |> order_by([gk], desc: gk.key_number)
     |> limit(1)
     |> Repo.one()
+    |> to_protobuf_group_key()
   end
 
   @doc """
@@ -93,6 +106,7 @@ defmodule TextMessengerServer.Keys do
     |> where([gk], gk.chat_id == ^chat_id and gk.user_id == ^user_id)
     |> order_by([gk], asc: gk.key_number)  # Sort by key_number in ascending order
     |> Repo.all()
+    |> to_protobuf_group_keys()
   end
 
   # TODO: Separate check function to ensure that: creator_id is the same as request sender and signatures are valid.
@@ -188,5 +202,50 @@ defmodule TextMessengerServer.Keys do
       {:ok, _group_key} -> :ok
       {:error, %{errors: errors}} -> {:error, "Failed to insert group key: #{inspect(errors)}"}
     end
+  end
+
+  # Conversion functions
+
+  defp to_protobuf_encryption_key(%EncryptionKey{user_id: user_id, public_key: key}) do
+    %Protobuf.EncryptionKey{
+      user_id: user_id,
+      public_key: key,
+    }
+  end
+
+  defp to_protobuf_encryption_keys(keys) do
+    %Protobuf.EncryptionKeys{
+      encryption_keys: Enum.map(keys, &to_protobuf_encryption_key/1)
+    }
+  end
+
+  defp to_protobuf_signature_key(%SignatureKey{user_id: user_id, public_key: key}) do
+    %Protobuf.SignatureKey{
+      user_id: user_id,
+      public_key: key,
+    }
+  end
+
+  defp to_protobuf_signature_keys(keys) do
+    %Protobuf.SignatureKeys{
+      signature_keys: Enum.map(keys, &to_protobuf_signature_key/1)
+    }
+  end
+
+  defp to_protobuf_group_key(%GroupKey{chat: chat_id, recipient: recipient_id, creator: creator_id, key_number: key_number, encrypted_key: encrypted_key, signature: signature}) do
+    %Protobuf.GroupKey{
+      chat_id: chat_id,
+      recipient_id: recipient_id,
+      creator_id: creator_id,
+      key_number: key_number,
+      encrypted_key: encrypted_key,
+      signature: signature
+    }
+  end
+
+  defp to_protobuf_group_keys(keys) do
+    %Protobuf.GroupKeys{
+      group_keys: Enum.map(keys, &to_protobuf_group_key/1)
+    }
   end
 end

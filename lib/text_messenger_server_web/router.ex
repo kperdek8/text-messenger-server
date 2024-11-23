@@ -16,6 +16,10 @@ defmodule TextMessengerServerWeb.Router do
   scope "/api", TextMessengerServerWeb do
     pipe_through([:api, TextMessengerServerWeb.Auth.Pipeline])
 
+    post("/keys/encryption", KeyController, :post_encryption_key)
+    post("/keys/signature", KeyController, :post_signature_key)
+
+    get("/users/:id/keys", KeyController, :fetch_user_keys)
     get("/users/:id", UserController, :fetch_user)
     get("/users", UserController, :fetch_users)
 
@@ -24,6 +28,7 @@ defmodule TextMessengerServerWeb.Router do
     get("/chats/:id", ChatController, :fetch_chat)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
     get("/chats/:id/users", UserController, :fetch_chat_members)
+    get("/chats/:id/keys", KeyController, :fetch_members_public_keys)
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

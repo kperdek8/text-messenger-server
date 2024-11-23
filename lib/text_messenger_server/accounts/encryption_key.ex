@@ -1,4 +1,4 @@
-defmodule TextMessengerServer.Accounts.EncryptionPublicKey do
+defmodule TextMessengerServer.Accounts.EncryptionKey do
   use Ecto.Schema
   import Ecto.Changeset
 
