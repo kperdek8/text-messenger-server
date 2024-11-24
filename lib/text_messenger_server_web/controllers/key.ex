@@ -15,7 +15,7 @@ defmodule TextMessengerServerWeb.KeyController do
         |> put_resp_content_type("application/x-protobuf")
         |> send_resp(200, EncryptionKey.encode(encryption_key))
 
-      {:error, _reason} ->
+      :error ->
         conn
         |> send_resp(400, Jason.encode!(%{error: "Invalid Base64 encoding"}))
     end
@@ -31,7 +31,7 @@ defmodule TextMessengerServerWeb.KeyController do
         |> put_resp_content_type("application/x-protobuf")
         |> send_resp(200, SignatureKey.encode(signature_key))
 
-      {:error, _reason} ->
+      :error ->
         conn
         |> send_resp(400, Jason.encode!(%{error: "Invalid Base64 encoding"}))
     end
@@ -84,7 +84,7 @@ defmodule TextMessengerServerWeb.KeyController do
         |> put_resp_content_type("application/x-protobuf")
         |> send_resp(200, UserKeysList.encode(user_keys_list))
       else
-        {:error, reason} ->
+        {:error, _reason} ->
           conn
           |> send_resp(500, Jason.encode!(%{error: "Internal server error"}))
       end

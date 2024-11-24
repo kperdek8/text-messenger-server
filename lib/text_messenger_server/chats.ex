@@ -141,6 +141,27 @@ defmodule TextMessengerServer.Chats do
   end
 
   @doc """
+  Sets the `requires_key_change` field for a specific chat.
+  If the field is already set to the desired value, no changes are made.
+  """
+  def set_requires_key_change(chat_id, value) when is_boolean(value) do
+    query = from c in Chat, where: c.id == ^chat_id
+
+    case Repo.one(query) do
+      nil ->
+        {:error, :chat_not_found}
+
+      _chat ->
+        Repo.update_all(
+          from(c in Chat, where: c.id == ^chat_id),
+          set: [requires_key_change: value]
+        )
+
+        :ok
+    end
+  end
+
+  @doc """
   Verifies if user is member of specific chat.
   """
   def is_user_member_of_chat?(user_id, chat_id) do
@@ -152,6 +173,13 @@ defmodule TextMessengerServer.Chats do
     Repo.exists?(query)
   end
 
+  def chat_requires_key_change?(chat_id) do
+    query = from c in Chat,
+            where: c.id == ^chat_id,
+            select: c.requires_key_change
+
+    Repo.one(query) || false
+  end
 
   # Conversion Functions
 
