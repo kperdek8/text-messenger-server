@@ -10,11 +10,12 @@ defmodule TextMessengerServerWeb.ChatChannel do
   def join("chat:" <> chat_id, _params, socket) do
     user_id = socket.assigns.user_id
     if Chats.is_user_member_of_chat?(user_id, chat_id) do
+      socket = assign(socket, :chat_id, chat_id)
       if Chats.chat_requires_key_change?(chat_id) do
-        push(socket, "change_key_request", %{chat_id: chat_id})
+        send(self(), :send_key_change_request)
       end
 
-      {:ok, assign(socket, :chat_id, chat_id)}
+      {:ok, socket}
     else
       {:error, "You are not member of this chat"}
     end
@@ -109,6 +110,12 @@ defmodule TextMessengerServerWeb.ChatChannel do
         IO.inspect(reason, label: "Unexpected behaviour when removing user")
         {:noreply, socket}
     end
+  end
+
+  def handle_info(:send_key_change_request, socket) do
+    chat_id = socket.assigns.chat_id
+    push(socket, "change_key_request", %{chat_id: chat_id})
+    {:noreply, socket}
   end
 
   intercept ["kick_user"]
