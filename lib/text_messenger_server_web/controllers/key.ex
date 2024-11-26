@@ -76,10 +76,6 @@ defmodule TextMessengerServerWeb.KeyController do
           end)
         }
 
-
-        IO.inspect(user_keys_list)
-        IO.inspect(UserKeysList.encode(user_keys_list))
-
         conn
         |> put_resp_content_type("application/x-protobuf")
         |> send_resp(200, UserKeysList.encode(user_keys_list))

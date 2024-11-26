@@ -15,6 +15,7 @@ defmodule TextMessengerServer.Application do
       # Start the Finch HTTP client for sending emails
       {Finch, name: TextMessengerServer.Finch},
       # Start a worker by calling: TextMessengerServer.Worker.start_link(arg)
+      TextMessengerServer.GroupKeyChangeETS,
       # {TextMessengerServer.Worker, arg},
       # Start to serve requests, typically the last entry
       TextMessengerServerWeb.Endpoint

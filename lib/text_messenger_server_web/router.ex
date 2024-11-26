@@ -27,8 +27,9 @@ defmodule TextMessengerServerWeb.Router do
     get("/chats", ChatController, :fetch_chats)
     get("/chats/:id", ChatController, :fetch_chat)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
+    get("/chats/:id/messages/keys", KeyController, :fetch_group_keys)
     get("/chats/:id/users", UserController, :fetch_chat_members)
-    get("/chats/:id/keys", KeyController, :fetch_members_public_keys)
+    get("/chats/:id/users/keys", KeyController, :fetch_members_public_keys)
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -102,11 +102,13 @@ defmodule TextMessengerServer.Keys do
   Fetch all group keys for a specific chat and user, sorted by key_number.
   """
   def get_all_group_keys(chat_id, user_id) do
-    GroupKey
-    |> where([gk], gk.chat_id == ^chat_id and gk.user_id == ^user_id)
+    keys = GroupKey
+    |> where([gk], gk.chat_id == ^chat_id and gk.recipient_id == ^user_id)
     |> order_by([gk], asc: gk.key_number)  # Sort by key_number in ascending order
     |> Repo.all()
+    |> IO.inspect()
     |> to_protobuf_group_keys()
+    {:ok, keys}
   end
 
   # TODO: Separate check function to ensure that: creator_id is the same as request sender and signatures are valid.
@@ -232,7 +234,7 @@ defmodule TextMessengerServer.Keys do
     }
   end
 
-  defp to_protobuf_group_key(%GroupKey{chat: chat_id, recipient: recipient_id, creator: creator_id, key_number: key_number, encrypted_key: encrypted_key, signature: signature}) do
+  defp to_protobuf_group_key(%GroupKey{chat_id: chat_id, recipient_id: recipient_id, creator_id: creator_id, key_number: key_number, encrypted_key: encrypted_key, signature: signature}) do
     %Protobuf.GroupKey{
       chat_id: chat_id,
       recipient_id: recipient_id,

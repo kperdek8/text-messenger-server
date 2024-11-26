@@ -49,13 +49,12 @@ defmodule TextMessengerServerWeb.ChatChannel do
     end
   end
 
-  def handle_in("change_group_key", %{"group_keys" => encoded_group_keys}, socket) do
+  def handle_in("change_group_key", %{"group_keys" => base64_encoded_group_keys}, socket) do
     chat_id = socket.assigns.chat_id
-
+    {:ok, encoded_group_keys} = Base.decode64(base64_encoded_group_keys)
     # Step 1: Decode and validate group keys count
     with %GroupKeys{} = group_keys <- GroupKeys.decode(encoded_group_keys),
          :ok <- Keys.validate_group_keys_count(chat_id, group_keys) do
-
       # Step 2: Check if group key change is already in progress using ETS
       if GroupKeyChangeETS.in_progress?(chat_id) do
         # If the change is already in progress, respond with an error
@@ -66,7 +65,7 @@ defmodule TextMessengerServerWeb.ChatChannel do
 
         # Step 4: Proceed with the group key change
         case Keys.change_group_key(chat_id, group_keys) do
-          :group_keys_inserted ->
+          {:ok, :group_keys_inserted} ->
             # Step 5: Successfully changed the group key, now reset the flag in database
             Chats.set_requires_key_change(chat_id, false)
 
