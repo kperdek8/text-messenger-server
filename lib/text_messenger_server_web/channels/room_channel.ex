@@ -7,6 +7,8 @@ defmodule TextMessengerServerWeb.ChatChannel do
   alias TextMessengerServer.Keys
   alias TextMessengerServer.Protobuf.{GroupKeys}
 
+  require Logger
+
   def join("chat:" <> chat_id, _params, socket) do
     user_id = socket.assigns.user_id
     if Chats.is_user_member_of_chat?(user_id, chat_id) do
@@ -21,14 +23,20 @@ defmodule TextMessengerServerWeb.ChatChannel do
     end
   end
 
-  def handle_in("new_message", %{"content" => content}, socket) do
+  def handle_in("new_message", %{"content" => content, "iv" => encoded_iv}, socket) do
     chat_id = socket.assigns.chat_id
     user_id = socket.assigns.user_id
+    {:ok, iv} = Base.decode64(encoded_iv)
+    {:ok, %ChatMessage{id: message_id}} = Chats.insert_chat_message(chat_id, user_id, content, iv)
 
-    {:ok, %ChatMessage{id: message_id}} = Chats.insert_chat_message(chat_id, user_id, content)
+    broadcast!(socket, "new_message", %{content: content, user_id: user_id, message_id: message_id, iv: encoded_iv})
 
-    broadcast!(socket, "new_message", %{content: content, user_id: user_id, message_id: message_id})
+    {:noreply, socket}
+  end
 
+  # Ignore incorrect payload
+  def handle_in("new_message", payload, socket) do
+    Logger.debug("Incorrect payload in socket message `new_message`: #{inspect(payload)}}")
     {:noreply, socket}
   end
 
@@ -47,6 +55,11 @@ defmodule TextMessengerServerWeb.ChatChannel do
 
       :already_member -> {:noreply, socket}
     end
+  end
+
+  def handle_in("add_user", payload, socket) do
+    Logger.debug("Incorrect payload in socket message `add_user`: #{inspect(payload)}}")
+    {:noreply, socket}
   end
 
   def handle_in("change_group_key", %{"group_keys" => base64_encoded_group_keys}, socket) do
@@ -89,6 +102,11 @@ defmodule TextMessengerServerWeb.ChatChannel do
     end
   end
 
+  def handle_in("change_group_key", payload, socket) do
+    Logger.debug("Incorrect payload in socket message `change_group_key`: #{inspect(payload)}}")
+    {:noreply, socket}
+  end
+
   def handle_in("kick_user", %{"user_id" => user_id}, socket) do
     chat_id = socket.assigns.chat_id
     case Chats.remove_user_from_chat(socket.assigns.chat_id, user_id) do
@@ -109,6 +127,11 @@ defmodule TextMessengerServerWeb.ChatChannel do
         IO.inspect(reason, label: "Unexpected behaviour when removing user")
         {:noreply, socket}
     end
+  end
+
+  def handle_in("kick_user", payload, socket) do
+    Logger.debug("Incorrect payload in socket message `kick_user`: #{inspect(payload)}}")
+    {:noreply, socket}
   end
 
   def handle_info(:send_key_change_request, socket) do

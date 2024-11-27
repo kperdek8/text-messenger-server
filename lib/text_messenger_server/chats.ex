@@ -42,7 +42,8 @@ defmodule TextMessengerServer.Chats do
         on: cu.chat_id == c.id,
         where: cu.user_id == ^user_id,
         select: c,
-        preload: [:users]
+        preload: [:users],
+        order_by: [asc: c.name]
       )
       |> Repo.all()
       |> to_protobuf_chats()
@@ -104,7 +105,7 @@ defmodule TextMessengerServer.Chats do
     messages =
       from(m in ChatMessage,
         where: m.chat_id == ^chat_id,
-        select: [:id, :user_id, :chat_id, :content, :timestamp],
+        select: m,
         order_by: [desc: m.timestamp]
       )
       |> Repo.all()
@@ -116,8 +117,7 @@ defmodule TextMessengerServer.Chats do
   @doc """
   Inserts a new message into a specified chat.
   """
-  # TODO: Remove default iv after implementation of endpoint
-  def insert_chat_message(chat_id, user_id, content, iv \\ <<1, 2, 3, 4>>) do
+  def insert_chat_message(chat_id, user_id, content, iv) do
     query = from c in TextMessengerServer.Chats.Chat,
             where: c.id == ^chat_id,
             select: c.current_key_number
@@ -210,13 +210,14 @@ defmodule TextMessengerServer.Chats do
     }
   end
 
-  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp}) do
+  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp, iv: iv}) do
     %Protobuf.ChatMessage{
       id: Ecto.UUID.cast!(id),
       user_id: Ecto.UUID.cast!(user_id),
       chat_id: Ecto.UUID.cast!(chat_id),
       content: content,
-      timestamp: DateTime.to_string(timestamp)
+      timestamp: DateTime.to_string(timestamp),
+      iv: iv
     }
   end
 

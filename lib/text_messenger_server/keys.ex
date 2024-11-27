@@ -106,7 +106,6 @@ defmodule TextMessengerServer.Keys do
     |> where([gk], gk.chat_id == ^chat_id and gk.recipient_id == ^user_id)
     |> order_by([gk], asc: gk.key_number)  # Sort by key_number in ascending order
     |> Repo.all()
-    |> IO.inspect()
     |> to_protobuf_group_keys()
     {:ok, keys}
   end
