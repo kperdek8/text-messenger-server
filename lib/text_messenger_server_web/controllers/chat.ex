@@ -39,6 +39,7 @@ defmodule TextMessengerServerWeb.ChatController do
     {:ok, %{id: user_id}} = Guardian.Plug.current_resource(conn)
     chat = Chats.create_chat(name)
     Chats.add_user_to_chat(chat.id, user_id)
+    Chats.set_requires_key_change(chat.id, true)
     conn
     |> put_resp_content_type("application/x-protobuf")
     |> send_resp(200, Protobuf.Chat.encode(chat))

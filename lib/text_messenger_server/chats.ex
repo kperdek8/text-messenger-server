@@ -210,14 +210,15 @@ defmodule TextMessengerServer.Chats do
     }
   end
 
-  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp, iv: iv}) do
+  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp, iv: iv, key_number: key_number}) do
     %Protobuf.ChatMessage{
       id: Ecto.UUID.cast!(id),
       user_id: Ecto.UUID.cast!(user_id),
       chat_id: Ecto.UUID.cast!(chat_id),
       content: content,
       timestamp: DateTime.to_string(timestamp),
-      iv: iv
+      iv: iv,
+      key_number: key_number
     }
   end
 

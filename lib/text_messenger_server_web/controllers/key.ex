@@ -3,7 +3,7 @@ defmodule TextMessengerServerWeb.KeyController do
 
   alias TextMessengerServer.Chats
   alias TextMessengerServer.Keys
-  alias TextMessengerServer.Protobuf.{User, GroupKeys, UserKeys, UserKeysList, EncryptionKey, SignatureKey, EncryptionKeys, SignatureKeys}
+  alias TextMessengerServer.Protobuf.{User, GroupKeys, GroupKey, UserKeys, UserKeysList, EncryptionKey, SignatureKey, EncryptionKeys, SignatureKeys}
 
   def post_encryption_key(conn, %{"key" => base64_key}) do
     case Base.decode64(base64_key) do
@@ -84,6 +84,20 @@ defmodule TextMessengerServerWeb.KeyController do
           conn
           |> send_resp(500, Jason.encode!(%{error: "Internal server error"}))
       end
+    else
+      conn
+      |> send_resp(403, Jason.encode!(%{error: "You are not member of this chat"}))
+    end
+  end
+
+  def fetch_latest_group_key(conn, %{"id" => chat_id}) do
+    {:ok, %User{id: user_id}} = Guardian.Plug.current_resource(conn)
+    if Chats.is_user_member_of_chat?(user_id, chat_id) do
+      {:ok, key} = Keys.get_latest_group_key(chat_id, user_id)
+
+      conn
+      |> put_resp_content_type("application/x-protobuf")
+      |> send_resp(200, GroupKey.encode(key))
     else
       conn
       |> send_resp(403, Jason.encode!(%{error: "You are not member of this chat"}))

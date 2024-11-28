@@ -23,7 +23,7 @@ defmodule TextMessengerServer.GroupKeyChangeETS do
   end
 
   def init(_) do
-    :ets.new(@table_name, [:named_table, :public, :set, {:read_concurrency, true}, {:write_concurrency, true}])
+    :ets.new(@table_name, [:named_table, :public, :set, {:read_concurrency, true}, {:write_concurrency, false}])
     {:ok, %{}}
   end
 end

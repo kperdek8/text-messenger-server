@@ -90,12 +90,13 @@ defmodule TextMessengerServer.Keys do
   Fetch the newest group key for a specific chat and user, sorted by key_number.
   """
   def get_latest_group_key(chat_id, user_id) do
-    GroupKey
-    |> where([gk], gk.chat_id == ^chat_id and gk.user_id == ^user_id)
+    key = GroupKey
+    |> where([gk], gk.chat_id == ^chat_id and gk.recipient_id == ^user_id)
     |> order_by([gk], desc: gk.key_number)
     |> limit(1)
     |> Repo.one()
     |> to_protobuf_group_key()
+    {:ok, key}
   end
 
   @doc """

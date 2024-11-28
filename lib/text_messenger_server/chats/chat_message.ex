@@ -7,7 +7,7 @@ defmodule TextMessengerServer.Chats.ChatMessage do
     belongs_to(:user, TextMessengerServer.Accounts.User, type: :binary_id)
     belongs_to(:chat, TextMessengerServer.Chats.Chat, type: :binary_id)
 
-    field(:content, :string)
+    field(:content, :binary)
     field(:timestamp, :utc_datetime)
     field(:iv, :binary)
     field(:key_number, :integer) # Tracks which group key version was used

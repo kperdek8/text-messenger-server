@@ -23,13 +23,14 @@ defmodule TextMessengerServerWeb.ChatChannel do
     end
   end
 
-  def handle_in("new_message", %{"content" => content, "iv" => encoded_iv}, socket) do
+  def handle_in("new_message", %{"content" => encoded_content, "iv" => encoded_iv}, socket) do
     chat_id = socket.assigns.chat_id
     user_id = socket.assigns.user_id
     {:ok, iv} = Base.decode64(encoded_iv)
+    {:ok, content} = Base.decode64(encoded_content)
     {:ok, %ChatMessage{id: message_id}} = Chats.insert_chat_message(chat_id, user_id, content, iv)
 
-    broadcast!(socket, "new_message", %{content: content, user_id: user_id, message_id: message_id, iv: encoded_iv})
+    broadcast!(socket, "new_message", %{content: encoded_content, user_id: user_id, message_id: message_id, iv: encoded_iv})
 
     {:noreply, socket}
   end
@@ -95,7 +96,7 @@ defmodule TextMessengerServerWeb.ChatChannel do
     else
       # Handle errors related to invalid group keys or member count mismatch
       {:error, :key_member_count_mismatch} ->
-        {:reply, {:error, %{error: "Not every member is included in the group keys"}}, socket}
+        {:reply, {:error, %{error: "Number of keys does not match number of members in chat"}}, socket}
 
       _ ->
         {:reply, {:error, %{error: "Failed to decode or validate group keys"}}, socket}

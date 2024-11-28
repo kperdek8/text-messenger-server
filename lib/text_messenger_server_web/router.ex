@@ -28,6 +28,7 @@ defmodule TextMessengerServerWeb.Router do
     get("/chats/:id", ChatController, :fetch_chat)
     get("/chats/:id/messages", ChatMessagesController, :fetch_messages)
     get("/chats/:id/messages/keys", KeyController, :fetch_group_keys)
+    get("/chats/:id/messages/keys/latest", KeyController, :fetch_latest_group_key)
     get("/chats/:id/users", UserController, :fetch_chat_members)
     get("/chats/:id/users/keys", KeyController, :fetch_members_public_keys)
   end
