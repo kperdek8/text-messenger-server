@@ -26,13 +26,29 @@ defmodule TextMessengerServerWeb.ChatChannel do
   def handle_in("new_message", %{"content" => encoded_content, "iv" => encoded_iv}, socket) do
     chat_id = socket.assigns.chat_id
     user_id = socket.assigns.user_id
-    {:ok, iv} = Base.decode64(encoded_iv)
-    {:ok, content} = Base.decode64(encoded_content)
-    {:ok, %ChatMessage{id: message_id}} = Chats.insert_chat_message(chat_id, user_id, content, iv)
 
-    broadcast!(socket, "new_message", %{content: encoded_content, user_id: user_id, message_id: message_id, iv: encoded_iv})
+    if Chats.chat_requires_key_change?(chat_id) do
+      {:reply, {:error, %{error: "key_change_required"}}, socket}
+    else
+      {:ok, iv} = Base.decode64(encoded_iv)
+      {:ok, content} = Base.decode64(encoded_content)
 
-    {:noreply, socket}
+      case Chats.insert_chat_message(chat_id, user_id, content, iv) do
+        {:ok, %ChatMessage{id: message_id}} ->
+          broadcast!(socket, "new_message", %{
+            content: encoded_content,
+            user_id: user_id,
+            message_id: message_id,
+            iv: encoded_iv
+          })
+
+          {:reply, {:ok, %{message: "message_received"}}, socket}
+
+        {:error, reason} ->
+          Logger.error("Failed to insert chat message: #{inspect(reason)}")
+          {:reply, {:error, %{error: "Failed to send message"}}, socket}
+      end
+    end
   end
 
   # Ignore incorrect payload
@@ -46,11 +62,9 @@ defmodule TextMessengerServerWeb.ChatChannel do
     case Chats.add_user_to_chat(socket.assigns.chat_id, user_id) do
       :ok ->
         TextMessengerServerWeb.Endpoint.broadcast("notifications:#{user_id}", "added_to_chat", %{chat_id: socket.assigns.chat_id})
-        broadcast!(socket, "add_user", %{user_id: user_id})
+        broadcast_from!(socket, "add_user", %{user_id: user_id})
 
         Chats.set_requires_key_change(chat_id, true)
-
-        broadcast!(socket, "change_key_request", %{chat_id: chat_id})
 
         {:noreply, socket}
 
@@ -85,6 +99,7 @@ defmodule TextMessengerServerWeb.ChatChannel do
 
             # Broadcast key change
             broadcast!(socket, "group_key_changed", %{chat_id: chat_id})
+            GroupKeyChangeETS.set_in_progress(chat_id, false)
             {:reply, {:ok, %{message: "Group key changed successfully"}}, socket}
 
           _ ->
@@ -113,11 +128,9 @@ defmodule TextMessengerServerWeb.ChatChannel do
     case Chats.remove_user_from_chat(socket.assigns.chat_id, user_id) do
       :ok ->
         TextMessengerServerWeb.Endpoint.broadcast("notifications:#{user_id}", "removed_from_chat", %{chat_id: socket.assigns.chat_id})
-        broadcast!(socket, "kick_user", %{"user_id" => user_id})
+        broadcast_from!(socket, "kick_user", %{"user_id" => user_id})
 
         Chats.set_requires_key_change(chat_id, true)
-
-        broadcast!(socket, "change_key_request", %{chat_id: chat_id})
 
         {:noreply, socket}
 
