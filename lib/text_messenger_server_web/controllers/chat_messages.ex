@@ -7,7 +7,7 @@ defmodule TextMessengerServerWeb.ChatMessagesController do
   def fetch_messages(conn, %{"id" => chat_id}) do
     {:ok, %{id: user_id}} = Guardian.Plug.current_resource(conn)
     if Chats.is_user_member_of_chat?(user_id, chat_id) do
-      {:ok, messages} = Chats.get_chat_messages(chat_id)
+      {:ok, messages} = Chats.get_chat_messages(chat_id, user_id)
 
       conn
       |> put_resp_content_type("application/x-protobuf")

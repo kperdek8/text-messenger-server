@@ -60,7 +60,7 @@ defmodule TextMessengerServerWeb.ChatChannel do
   def handle_in("add_user", %{"user_id" => user_id}, socket) do
     chat_id = socket.assigns.chat_id
     case Chats.add_user_to_chat(socket.assigns.chat_id, user_id) do
-      :ok ->
+      {:ok, _chatuser} ->
         TextMessengerServerWeb.Endpoint.broadcast("notifications:#{user_id}", "added_to_chat", %{chat_id: socket.assigns.chat_id})
         broadcast_from!(socket, "add_user", %{user_id: user_id})
 
@@ -68,7 +68,8 @@ defmodule TextMessengerServerWeb.ChatChannel do
 
         {:noreply, socket}
 
-      :already_member -> {:noreply, socket}
+      {:error, :already_member} -> {:noreply, socket}
+      {:error, :user_not_found} -> {:noreply, socket}
     end
   end
 

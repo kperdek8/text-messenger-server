@@ -1,6 +1,6 @@
 defmodule TextMessengerServer.Chats do
   alias TextMessengerServer.Repo
-  alias TextMessengerServer.Chats.{Chat, ChatUser, ChatMessage}
+  alias TextMessengerServer.Chats.{Chat, ChatUser, ChatMessage, GroupKey}
   alias TextMessengerServer.Protobuf
   alias TextMessengerServer.Accounts.{User}
 
@@ -53,17 +53,25 @@ defmodule TextMessengerServer.Chats do
 
   @doc """
   Adds a user to a chat by creating an entry in the ChatUser join table.
+  Checks if the user exists in the database before proceeding.
   """
   def add_user_to_chat(chat_id, user_id) do
-    case Repo.get_by(ChatUser, chat_id: chat_id, user_id: user_id) do
+    # Check if the user exists
+    case Repo.get(User, user_id) do
       nil ->
-        %ChatUser{}
-        |> ChatUser.changeset(%{chat_id: chat_id, user_id: user_id})
-        |> Repo.insert()
-        :ok
+        {:error, :user_not_found}
 
-      _chat_user ->
-        :already_member
+      _user ->
+        # Check if the user is already a member of the chat
+        case Repo.get_by(ChatUser, chat_id: chat_id, user_id: user_id) do
+          nil ->
+            %ChatUser{}
+            |> ChatUser.changeset(%{chat_id: chat_id, user_id: user_id})
+            |> Repo.insert()
+
+          _chat_user ->
+            {:error, :already_member}
+        end
     end
   end
 
@@ -99,14 +107,22 @@ defmodule TextMessengerServer.Chats do
   end
 
   @doc """
-  Fetches messages for a specific chat and returns them in Protobuf format.
+  Fetches messages for a specific chat and user, returning only those messages for which the user has the corresponding group key. Messages are returned in Protobuf format.
   """
-  def get_chat_messages(chat_id) do
+  def get_chat_messages(chat_id, user_id) do
+    # Fetch relevant key numbers for the user and chat
+    key_numbers_query =
+      from(gk in GroupKey,
+        where: gk.chat_id == ^chat_id and gk.recipient_id == ^user_id,
+        select: gk.key_number
+      )
+
+    # Fetch messages for the chat where the key number is valid
     messages =
       from(m in ChatMessage,
-        where: m.chat_id == ^chat_id,
-        select: m,
-        order_by: [desc: m.timestamp]
+        where: m.chat_id == ^chat_id and m.key_number in subquery(key_numbers_query),
+        order_by: [desc: m.timestamp],
+        select: m
       )
       |> Repo.all()
       |> to_protobuf_messages()
