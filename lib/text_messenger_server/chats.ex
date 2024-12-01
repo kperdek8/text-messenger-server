@@ -133,7 +133,7 @@ defmodule TextMessengerServer.Chats do
   @doc """
   Inserts a new message into a specified chat.
   """
-  def insert_chat_message(chat_id, user_id, content, iv) do
+  def insert_chat_message(chat_id, user_id, content, iv, tag) do
     query = from c in TextMessengerServer.Chats.Chat,
             where: c.id == ^chat_id,
             select: c.current_key_number
@@ -149,6 +149,7 @@ defmodule TextMessengerServer.Chats do
           user_id: user_id,
           content: content,
           iv: iv,
+          tag: tag,
           timestamp: DateTime.utc_now(),
           key_number: current_key_number
         })
@@ -226,7 +227,7 @@ defmodule TextMessengerServer.Chats do
     }
   end
 
-  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp, iv: iv, key_number: key_number}) do
+  defp to_protobuf_message(%ChatMessage{id: id, user_id: user_id, chat_id: chat_id, content: content, timestamp: timestamp, iv: iv, tag: tag, key_number: key_number}) do
     %Protobuf.ChatMessage{
       id: Ecto.UUID.cast!(id),
       user_id: Ecto.UUID.cast!(user_id),
@@ -234,6 +235,7 @@ defmodule TextMessengerServer.Chats do
       content: content,
       timestamp: DateTime.to_string(timestamp),
       iv: iv,
+      tag: tag,
       key_number: key_number
     }
   end

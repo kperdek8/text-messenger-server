@@ -10,6 +10,7 @@ defmodule TextMessengerServer.Chats.ChatMessage do
     field(:content, :binary)
     field(:timestamp, :utc_datetime)
     field(:iv, :binary)
+    field(:tag, :binary)
     field(:key_number, :integer) # Tracks which group key version was used
 
     timestamps()
@@ -18,7 +19,7 @@ defmodule TextMessengerServer.Chats.ChatMessage do
   @doc false
   def changeset(chat_message, attrs) do
     chat_message
-    |> cast(attrs, [:user_id, :chat_id, :iv, :content, :timestamp, :key_number])
-    |> validate_required([:user_id, :chat_id, :iv, :content, :timestamp, :key_number])
+    |> cast(attrs, [:user_id, :chat_id, :iv, :content, :tag, :timestamp, :key_number])
+    |> validate_required([:user_id, :chat_id, :iv, :content, :tag, :timestamp, :key_number])
   end
 end

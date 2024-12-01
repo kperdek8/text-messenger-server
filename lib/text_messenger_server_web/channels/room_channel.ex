@@ -23,23 +23,25 @@ defmodule TextMessengerServerWeb.ChatChannel do
     end
   end
 
-  def handle_in("new_message", %{"content" => encoded_content, "iv" => encoded_iv}, socket) do
+  def handle_in("new_message", %{"content" => encoded_content, "iv" => encoded_iv, "tag" => encoded_tag}, socket) do
     chat_id = socket.assigns.chat_id
     user_id = socket.assigns.user_id
 
     if Chats.chat_requires_key_change?(chat_id) do
       {:reply, {:error, %{error: "key_change_required"}}, socket}
     else
+      {:ok, tag} = Base.decode64(encoded_tag)
       {:ok, iv} = Base.decode64(encoded_iv)
       {:ok, content} = Base.decode64(encoded_content)
 
-      case Chats.insert_chat_message(chat_id, user_id, content, iv) do
+      case Chats.insert_chat_message(chat_id, user_id, content, iv, tag) do
         {:ok, %ChatMessage{id: message_id}} ->
           broadcast!(socket, "new_message", %{
             content: encoded_content,
             user_id: user_id,
             message_id: message_id,
-            iv: encoded_iv
+            iv: encoded_iv,
+            tag: encoded_tag,
           })
 
           {:reply, {:ok, %{message: "message_received"}}, socket}

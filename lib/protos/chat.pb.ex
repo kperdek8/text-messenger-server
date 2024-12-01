@@ -44,7 +44,8 @@ defmodule TextMessengerServer.Protobuf.ChatMessage do
   field :content, 4, type: :bytes
   field :timestamp, 5, type: :string
   field :iv, 6, type: :bytes
-  field :key_number, 7, type: :int32, json_name: "keyNumber"
+  field :tag, 7, type: :bytes
+  field :key_number, 8, type: :int32, json_name: "keyNumber"
 end
 
 defmodule TextMessengerServer.Protobuf.ChatMessages do
