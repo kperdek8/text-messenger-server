@@ -25,7 +25,8 @@ config :text_messenger_server, TextMessengerServerWeb.Endpoint,
     layout: false
   ],
   pubsub_server: TextMessengerServer.PubSub,
-  live_view: [signing_salt: "nQ1RAQnl"]
+  live_view: [signing_salt: "nQ1RAQnl"],
+  server: true
 
 # Configures the mailer
 #
